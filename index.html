@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>pomodoro</title>
+  <style>
+    :root {
+      --focus-bg: linear-gradient(to bottom right, #d0e8f2, #a8c0ff);
+      --short-bg: linear-gradient(to bottom right, #d4f4dd, #a0eec0);
+      --long-bg: linear-gradient(to bottom right, #ffd5c2, #ffb88c);
+
+      --bg-dark: #1e1e2f;
+      --text-light: #333;
+      --text-dark: #fcefe3;
+      --button-light: #ffd5ec;
+      --button-dark: #444c64;
+      --task-bg-light: rgba(255, 255, 255, 0.7);
+      --task-bg-dark: rgba(30, 30, 47, 0.7);
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Comic Sans MS', 'Courier New', cursive;
+      background: var(--focus-bg);
+      color: var(--text-light);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      text-align: center;
+      transition: all 0.5s ease;
+    }
+
+    body.focus {
+      background: var(--focus-bg);
+    }
+
+    body.short {
+      background: var(--short-bg);
+    }
+
+    body.long {
+      background: var(--long-bg);
+    }
+
+    body.dark {
+      background: var(--bg-dark);
+      color: var(--text-dark);
+    }
+
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 30px;
+      max-width: 1000px;
+      margin: 20px;
+    }
+
+    .left-panel, .right-panel {
+      flex: 1;
+      min-width: 300px;
+      max-width: 450px;
+    }
+
+    h1 {
+      font-size: 3em;
+      margin-bottom: 0.3em;
+      width: 100%;
+    }
+
+    .timer {
+      font-size: 5em;
+      margin: 20px 0;
+      font-weight: bold;
+    }
+
+    .controls, .settings {
+      display: flex;
+      gap: 15px;
+      margin: 15px 0;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 1em;
+      border: none;
+      border-radius: 10px;
+      background-color: var(--button-light);
+      color: var(--text-light);
+      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+    }
+
+    body.dark button {
+      background-color: var(--button-dark);
+      color: var(--text-dark);
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    iframe {
+      border-radius: 12px;
+      margin-top: 25px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      width: 100%;
+      min-height: 200px;
+    }
+
+    .session-label {
+      font-size: 1.2em;
+      font-style: italic;
+      margin-bottom: 10px;
+    }
+
+    input {
+      width: 50px;
+      padding: 5px;
+      border-radius: 5px;
+      border: none;
+      text-align: center;
+      font-size: 1em;
+      background-color: #f0f0f0;
+    }
+
+    body.dark input {
+      background-color: #333;
+      color: white;
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 0.9em;
+      gap: 5px;
+    }
+
+    .toggle {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      cursor: pointer;
+      padding: 8px 14px;
+      border-radius: 12px;
+      background: #ccccff;
+      font-size: 0.9em;
+      transition: 0.3s ease;
+      z-index: 100;
+    }
+
+    body.dark .toggle {
+      background: #6666cc;
+      color: white;
+    }
+
+    .task-list {
+      width: 100%;
+      margin-top: 20px;
+      background: var(--task-bg-light);
+      border-radius: 10px;
+      padding: 15px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    body.dark .task-list {
+      background: var(--task-bg-dark);
+    }
+
+    .task-input {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .task-input input {
+      flex: 1;
+      padding: 8px;
+      border-radius: 5px;
+      min-width: 0;
+    }
+
+    .tasks {
+      text-align: left;
+    }
+
+    .task {
+      display: flex;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px dashed rgba(0,0,0,0.1);
+    }
+
+    body.dark .task {
+      border-bottom-color: rgba(255,255,255,0.1);
+    }
+
+    .task input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      margin-right: 10px;
+    }
+
+    .task-text {
+      flex: 1;
+    }
+
+    .task.completed .task-text {
+      text-decoration: line-through;
+      opacity: 0.7;
+    }
+
+    .delete-task {
+      background: none;
+      border: none;
+      color: #ff6b6b;
+      font-size: 1.2em;
+      cursor: pointer;
+      padding: 0 5px;
+      box-shadow: none;
+    }
+
+    body.dark .delete-task {
+      color: #ff9e9e;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+        align-items: center;
+      }
+      .left-panel, .right-panel {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body class="focus">
+  <div class="toggle" onclick="toggleMode()">🌙 dark mode</div>
+
+  <h1>pomodoro</h1>
+  
+  <div class="container">
+    <div class="left-panel">
+      <div class="session-label" id="session-label">Focus session</div>
+      <div id="session-count" style="margin-bottom: 10px;">Sessions completed: 0</div>
+      <div class="timer" id="timer">25:00</div>
+
+      <div class="controls">
+        <button onclick="startTimer()">start</button>
+        <button onclick="pauseTimer()">pause</button>
+        <button onclick="resetTimer()">reset</button>
+        <button onclick="skipSession()">skip</button>
+      </div>
+
+      <div class="settings">
+        <label>focus<br><input id="focusInput" type="number" min="1" value="25">min</label>
+        <label>short break<br><input id="shortInput" type="number" min="1" value="5">min</label>
+        <label>long break<br><input id="longInput" type="number" min="1" value="15">min</label>
+        <button onclick="applySettings()">apply</button>
+      </div>
+
+      <div class="task-list">
+        <h3>tasks</h3>
+        <div class="task-input">
+          <input type="text" id="new-task" placeholder="Add a new task..." onkeypress="handleTaskInput(event)">
+          <button onclick="addTask()">add</button>
+        </div>
+        <div class="tasks" id="tasks"></div>
+      </div>
+    </div>
+
+    <div class="right-panel">
+      <iframe width="100%" height="315"
+        src="https://www.youtube.com/embed/G55IO9IDhzg?autoplay=1&mute=1"
+        allow="autoplay" allowfullscreen>
+      </iframe>
+    </div>
+  </div>
+
+  <audio id="alert-sound" src="https://www.soundjay.com/buttons/sounds/beep-05.mp3" preload="auto"></audio>
+
+  <script>
+    let sessionCompleted = 0;
+    const timerDisplay = document.getElementById("timer");
+    const sessionLabel = document.getElementById("session-label");
+    const tasksContainer = document.getElementById("tasks");
+
+    let durations = {
+      focus: 25 * 60,
+      shortBreak: 5 * 60,
+      longBreak: 15 * 60
+    };
+
+    const sessionOrder = ["focus", "shortBreak", "focus", "shortBreak", "focus", "longBreak"];
+    let sessionIndex = 0;
+    let currentTime = durations["focus"];
+    let timer;
+    let isRunning = false;
+
+    function updateDisplay() {
+      const minutes = Math.floor(currentTime / 60);
+      const seconds = currentTime % 60;
+      timerDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+
+    function updateBackground(session) {
+      document.body.classList.remove("focus", "short", "long");
+      if (session === "focus") document.body.classList.add("focus");
+      else if (session === "shortBreak") document.body.classList.add("short");
+      else if (session === "longBreak") document.body.classList.add("long");
+    }
+
+    function switchSession() {
+      const sound = document.getElementById("alert-sound");
+      if (sound) {
+        sound.currentTime = 0;
+        sound.play().catch(err => console.warn("Audio blocked:", err));
+      }
+
+      sessionIndex = (sessionIndex + 1) % sessionOrder.length;
+      const session = sessionOrder[sessionIndex];
+
+      if (session === "focus") {
+        sessionCompleted++;
+        document.getElementById("session-count").textContent = `Sessions completed: ${sessionCompleted}`;
+      }
+
+      currentTime = durations[session];
+      sessionLabel.textContent = session === "focus" ? "Focus session" :
+                                 session === "shortBreak" ? "Short break" : "Long break";
+      updateBackground(session);
+      updateDisplay();
+    }
+
+    function startTimer() {
+      if (isRunning) return;
+      isRunning = true;
+      timer = setInterval(() => {
+        if (currentTime > 0) {
+          currentTime--;
+          updateDisplay();
+        } else {
+          clearInterval(timer);
+          isRunning = false;
+          switchSession();
+          startTimer();
+        }
+      }, 1000);
+    }
+
+    function pauseTimer() {
+      clearInterval(timer);
+      isRunning = false;
+    }
+
+    function resetTimer() {
+      pauseTimer();
+      sessionIndex = 0;
+      currentTime = durations["focus"];
+      sessionLabel.textContent = "Focus session";
+      updateBackground("focus");
+      updateDisplay();
+    }
+
+    function skipSession() {
+      pauseTimer();
+      switchSession();
+    }
+
+    function applySettings() {
+      durations.focus = parseInt(document.getElementById("focusInput").value || 25) * 60;
+      durations.shortBreak = parseInt(document.getElementById("shortInput").value || 5) * 60;
+      durations.longBreak = parseInt(document.getElementById("longInput").value || 15) * 60;
+      resetTimer();
+    }
+
+    function toggleMode() {
+      document.body.classList.toggle("dark");
+    }
+
+    function addTask() {
+      const input = document.getElementById("new-task");
+      const text = input.value.trim();
+      if (text) {
+        const taskId = Date.now();
+        const taskElement = document.createElement("div");
+        taskElement.className = "task";
+        taskElement.innerHTML = `
+          <input type="checkbox" id="task-${taskId}" onchange="toggleTask(${taskId})">
+          <span class="task-text">${text}</span>
+          <button class="delete-task" onclick="removeTask(${taskId})">×</button>
+        `;
+        tasksContainer.appendChild(taskElement);
+        input.value = "";
+        saveTasks();
+      }
+    }
+
+    function handleTaskInput(event) {
+      if (event.key === "Enter") addTask();
+    }
+
+    function toggleTask(id) {
+      const task = document.getElementById(`task-${id}`).parentElement;
+      task.classList.toggle("completed");
+      saveTasks();
+    }
+
+    function removeTask(id) {
+      const task = document.getElementById(`task-${id}`).parentElement;
+      task.remove();
+      saveTasks();
+    }
+
+    function saveTasks() {
+      const tasks = [];
+      document.querySelectorAll('.task').forEach(task => {
+        tasks.push({
+          text: task.querySelector('.task-text').textContent,
+          completed: task.classList.contains('completed')
+        });
+      });
+      localStorage.setItem('pomodoroTasks', JSON.stringify(tasks));
+    }
+
+    function loadTasks() {
+      const savedTasks = localStorage.getItem('pomodoroTasks');
+      if (savedTasks) {
+        const tasks = JSON.parse(savedTasks);
+        tasks.forEach(task => {
+          const taskId = Date.now();
+          const taskElement = document.createElement("div");
+          taskElement.className = `task ${task.completed ? 'completed' : ''}`;
+          taskElement.innerHTML = `
+            <input type="checkbox" id="task-${taskId}" onchange="toggleTask(${taskId})" ${task.completed ? 'checked' : ''}>
+            <span class="task-text">${task.text}</span>
+            <button class="delete-task" onclick="removeTask(${taskId})">×</button>
+          `;
+          tasksContainer.appendChild(taskElement);
+        });
+      }
+    }
+
+    updateDisplay();
+    updateBackground("focus");
+    loadTasks();
+  </script>
+</body>
+</html>
